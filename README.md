@@ -29,7 +29,7 @@ All API access requires both an API key and valid Counterpoint user credentials.
 **Example**:
 
 ```bash
-curl -X POST "https://playgrounddevcpapi.rapidextras.com/Authentication/Token" \
+curl -X POST "https://rapid.cpapi.com/Authentication/Token" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -45,7 +45,6 @@ curl -X POST "https://playgrounddevcpapi.rapidextras.com/Authentication/Token" \
   "user": {
     "USR_ID": "ADMIN",
     "NAM": "Administrator"
-    // ... other user details
   },
   "expiresIn": 720,
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -58,7 +57,7 @@ curl -X POST "https://playgrounddevcpapi.rapidextras.com/Authentication/Token" \
 Include the access token in the Authorization header for all subsequent API calls:
 
 ```bash
-curl -X GET "https://playgrounddevcpapi.rapidextras.com/Items" \
+curl -X GET "https://rapid.cpapi.com/Items" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "x-api-key: YOUR_API_KEY"
 ```
@@ -104,12 +103,12 @@ All pagination is handled through query parameters:
 
 ```bash
 # Get first page (default 50 records)
-curl -X GET "https://playgrounddevcpapi.rapidextras.com/Items" \
+curl -X GET "https://rapid.cpapi.com/Items" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY"
 
 # Get second page with 25 records per page
-curl -X GET "https://playgrounddevcpapi.rapidextras.com/Items?Page=2&PageSize=25" \
+curl -X GET "https://rapid.cpapi.com/Items?Page=2&PageSize=25" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY"
 ```
@@ -118,7 +117,7 @@ curl -X GET "https://playgrounddevcpapi.rapidextras.com/Items?Page=2&PageSize=25
 
 ```bash
 # Get items modified in the last 30 days
-curl -X GET "https://playgrounddevcpapi.rapidextras.com/Items?StartDate=2024-01-01&EndDate=2024-01-31&Page=1&PageSize=100" \
+curl -X GET "https://rapid.cpapi.com/Items?StartDate=2024-01-01&EndDate=2024-01-31&Page=1&PageSize=100" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY"
 ```
@@ -127,7 +126,7 @@ curl -X GET "https://playgrounddevcpapi.rapidextras.com/Items?StartDate=2024-01-
 
 ```bash
 # Search for items containing "shirt" in the name
-curl -X GET "https://playgrounddevcpapi.rapidextras.com/Items?Keyword=shirt&Page=1&PageSize=50" \
+curl -X GET "https://rapid.cpapi.com/Items?Keyword=shirt&Page=1&PageSize=50" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY"
 ```
@@ -143,7 +142,7 @@ let hasMoreData = true;
 
 while (hasMoreData) {
   const response = await fetch(
-    `https://playgrounddevcpapi.rapidextras.com/Items?Page=${page}&PageSize=${pageSize}`,
+    `https://rapid.cpapi.com/Items?Page=${page}&PageSize=${pageSize}`,
     {
       headers: {
         Authorization: "Bearer YOUR_TOKEN",
@@ -277,7 +276,7 @@ If you are on a later version of Counterpoint, please contact Rapid for compatib
 ```javascript
 // 1. Get access token
 const tokenResponse = await fetch(
-  "https://playgrounddevcpapi.rapidextras.com/Authentication/Token",
+  "https://rapid.cpapi.com/Authentication/Token",
   {
     method: "POST",
     headers: {
@@ -296,7 +295,7 @@ const accessToken = tokenData.accessToken;
 
 // 2. Use access token to get data
 const itemsResponse = await fetch(
-  "https://playgrounddevcpapi.rapidextras.com/Items?Page=1&PageSize=10",
+  "https://rapid.cpapi.com/Items?Page=1&PageSize=10",
   {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -312,7 +311,7 @@ console.log(items);
 ### POST /Documents Example
 
 ```bash
-curl -X POST "https://playgrounddevcpapi.rapidextras.com/Documents" \
+curl -X POST "https://rapid.cpapi.com/Documents" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
