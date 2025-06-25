@@ -1,6 +1,6 @@
 # Rapid Counterpoint API v1.6.0 Release Notes
 
-Released June 24, 2025
+_Released June 24, 2025_
 
 ## Store Tax Code Method Adherence
 

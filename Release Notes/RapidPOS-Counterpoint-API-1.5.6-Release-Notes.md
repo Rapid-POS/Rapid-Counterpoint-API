@@ -1,6 +1,6 @@
 # Rapid Counterpoint API v1.5.6 Release Notes
 
-Released June 10, 2025
+_Released June 10, 2025_
 
 ## Enhance Custom Field Handling with Data Type Support
 
