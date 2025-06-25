@@ -1,4 +1,4 @@
-# Rapid POS Counterpoint API Release Notes v1.6.0
+# Rapid Counterpoint API Release Notes v1.6.0
 
 Released June 24, 2025
 
