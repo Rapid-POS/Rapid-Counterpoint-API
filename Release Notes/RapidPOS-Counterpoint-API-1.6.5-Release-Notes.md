@@ -10,6 +10,6 @@ This change resolves a check constraint violation error that previously occurred
 
 ## Receiver Enhancements – Changes to the API required for new RapidGO Functionality
 
-The `Add Receiver` service has been updated to support new RapidGO functionality for creating multiple receivings from the same purchase order without posting.
+The `AddReceiver` service has been updated to support new RapidGO functionality for creating multiple receivings from the same purchase order without posting.
 
 This enhancement allows multiple, unposted receiving sessions to be created from a single purchase order, enabling more flexible receiving workflows.
