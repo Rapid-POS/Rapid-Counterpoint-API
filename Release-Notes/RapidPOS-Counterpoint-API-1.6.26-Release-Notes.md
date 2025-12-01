@@ -1,6 +1,6 @@
 # Rapid CP API v1.6.26 — Release Notes
 
-**Release Date:** _[Month Day, Year]_
+**Release Date:** _[June 10, 2025]_
 
 ---
 
