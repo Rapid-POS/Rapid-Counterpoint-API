@@ -1,4 +1,4 @@
-# Rapid CP API v1.6.27 — Release Notes
+# RapidPOS CounterPoint API 1.6.27 — Release Notes
 
 **Release Date:**   December 2, 2025
 
