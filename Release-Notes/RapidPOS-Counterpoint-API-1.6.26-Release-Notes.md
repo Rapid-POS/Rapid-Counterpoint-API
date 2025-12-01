@@ -4,12 +4,7 @@
 
 ---
 
-## 🚀 New Functionality
-_No new functionality in this release._
-
----
-
-## 🛠️ Bug Fixes & Performance Improvements
+## 🛠️ Patches & Performance Improvements
 
 ### Service Crash on System Shutdown or Restart
 - Resolved an issue where the **RapidPOS.API.CP service** would crash when the server was restarted, shut down, or powered off unexpectedly.
