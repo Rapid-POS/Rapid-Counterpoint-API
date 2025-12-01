@@ -1,4 +1,4 @@
-# Rapid CP API v1.6.26 — Release Notes
+# Rapid CP API v1.6.27 — Release Notes
 
 **Release Date:** _[June 10, 2025]_
 
