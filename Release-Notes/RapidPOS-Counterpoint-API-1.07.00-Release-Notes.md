@@ -34,11 +34,8 @@ _Release Date: December 3, 2025_
 
 - The Rapid Custom Task Agent (RCTA) uses the Rapid CP API for bound book local copy operations.
 - Corrected the command execution logic so that bound book local copy reports export properly.
-- Affected API endpoints:
-  - **`RunReport`**
-  - **`RunExport`**
-
+  
 ### Adjusted Document History Endpoint
 
-- Added **Business Date**, **Store ID**, and **Document ID** fields to the `DocumentHistory` endpoint to ensure a consistent and predictable sequence of returned data.
+- Added BUS_DAT, STR_ID and DOC_ID as the ordering for the DocumentHistory endpoint to ensure consistent ordering when calling the endpoint with StartDate and EndDate parameters.
 
