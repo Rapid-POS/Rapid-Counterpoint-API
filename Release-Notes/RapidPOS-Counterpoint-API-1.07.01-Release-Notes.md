@@ -1,4 +1,4 @@
 ## Fixes and Performance Enhancements
 
-### RapidPOS.API.CP Service Crashing on Server Restart/Shutdown/Poweroff - Now resolved
+### Resolved issue where RapidPOS.API.CP Service Crashing on Server Restart/Shutdown/Poweroff
 
