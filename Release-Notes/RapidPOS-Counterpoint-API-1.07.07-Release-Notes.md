@@ -1,4 +1,4 @@
-# Rapid CounterPoint API v1.07.00 Release Notes  
+# Rapid CounterPoint API v1.07.07 Release Notes  
 **Release Date:** February 10, 2026
 
 ## Bug Fix
