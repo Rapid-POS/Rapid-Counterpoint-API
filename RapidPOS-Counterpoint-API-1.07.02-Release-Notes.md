@@ -1,4 +1,4 @@
-## 🐛 Bug Fixes
+## 🐛 Bug Fix
 
 ### Cycle Count Submission Error — Resolved
 
