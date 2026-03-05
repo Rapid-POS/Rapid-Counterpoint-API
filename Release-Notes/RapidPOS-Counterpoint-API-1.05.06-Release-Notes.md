@@ -1,4 +1,4 @@
-# Rapid Counterpoint API v1.5.6 Release Notes
+# Rapid Counterpoint API v1.05.06 Release Notes
 
 _Released June 10, 2025_
 
