@@ -1,4 +1,4 @@
-# Rapid Counterpoint API v1.05.07 Release Notes
+# Rapid Counterpoint API v1.07.08 Release Notes
 Released March 10, 2026
 
 ## Update Multi-Company File Copy Script for RapidGo Label Printing
