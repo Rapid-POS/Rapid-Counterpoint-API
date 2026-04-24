@@ -1,6 +1,6 @@
 # Rapid Counterpoint API v1.08.00 Release Notes
 
-**Release Date:** April 24, 2026
+**Release Date:** April 29th, 2026
 
 ## New Features
 
