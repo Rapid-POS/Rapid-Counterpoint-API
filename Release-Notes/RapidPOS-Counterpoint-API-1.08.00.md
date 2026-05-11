@@ -44,11 +44,20 @@ With this version of RapidGO, users can now select any location in either the **
 RapidGO now allows users to edit receiver header information directly within the application.
 
 Users can now modify:
-- Reference numbers
-- Receiver comments
-- Additional header-level information associated with the receiver
+
+#### Header Fields
+- `REF`
+- `COMMNT_1`
+- `COMMNT_2`
+- `COMMNT_3`
+
+#### Line Fields
+- `COMMNT_1`
+- `COMMNT_2`
+- `COMMNT_3`
 
 This enhancement provides greater flexibility when updating receiving information without needing to return to CounterPoint.
+
 
 <br>
 
