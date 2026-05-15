@@ -3,10 +3,5 @@
 **Release Date:** May 14th, 2026
 
 ## Bug Fixes & Performance Enhancements
+> **Note:** We pushed out an out-of-schedule update to resolve an issue affecting RapidGo, which utilizes the Rapid CounterPoint API. This update was released outside of our normal update schedule to address the issue as quickly as possible and help prevent further disruption.
 
-### Sign-In Error Resolved
-Fixed an issue where users could encounter a sign-in failure when launching RapidGo.
-
-- Resolved a database constraint issue related to duplicate barcode entries.
-- Updated the `IM_BARCOD` table unique index to include the `SEQ_NO` column.
-- Barcode records are now validated using `ITEM_NO`, `BARCOD`, and `SEQ_NO`, improving data integrity and preventing login-related errors.
