@@ -380,3 +380,177 @@ curl -X POST "https://rapid.cpapi.com/Documents" \
 	}
 }'
 ```
+
+## Examples
+
+### Creating a Sales Order Document
+
+Sample working payload for creating a Counterpoint sales order document.
+
+> Fields marked with `MODIFY` are the most common values that should be changed for each order.
+> The sample request is valid JSON and can be copied into an API request. 
+> The annotated payload below is for reference only because JSON does not support comments.
+
+#### Sample Request
+
+```bash
+curl -X POST "https://rapid.cpapi.com/Documents" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "CUST_NO": "202-100000",
+    "REF": "RAPID-TEST",
+    "SHIP_DAT": "2025-08-01",
+    "DOC_TYP": "O",
+    "STR_ID": "202",
+    "STA_ID": "202-01",
+    "DRW_ID": "202-01",
+    "TKT_TYP": "T",
+    "USR_ID": "RAPID",
+    "TAX_COD": "EC_WOOCOMM",
+    "TAX_OVRD_REAS": "EC_WOOCOMM",
+    "TKT_DT": null,
+    "REQ_REPRICE": "Y",
+    "PS_DOC_LIN": [
+      {
+        "ITEM_NO": "APL-UMB",
+        "QTY_UNIT": "Each",
+        "QTY_SOLD": 1,
+        "LIN_TYP": "O",
+        "PRC": 14.99,
+        "PS_DOC_LIN_PRICE": [
+          {
+            "QTY_PRCD": 1,
+            "UNIT_PRC": 14.99
+          }
+        ]
+      },
+      {
+        "ITEM_NO": "ADM-PLAT",
+        "QTY_UNIT": "DOZ",
+        "SELL_UNIT": "0",
+        "QTY_SOLD": 1,
+        "LIN_TYP": "O",
+        "PRC": 36.95,
+        "PS_DOC_LIN_PRICE": [
+          {
+            "QTY_PRCD": 1,
+            "UNIT_PRC": 36.95
+          }
+        ]
+      }
+    ],
+    "PS_DOC_PMT": [
+      {
+        "PAY_COD": "EC_WOOCOMM",
+        "AMT": 56.35,
+        "GFC_AUTHED": "N",
+        "PS_DOC_PMT_PROMPT": [
+          {
+            "PROMPT_TXT": "Enter Ref/Auth",
+            "PROMPT_VAL": "81047671168"
+          }
+        ]
+      }
+    ],
+    "PS_DOC_TAX": [
+      {
+        "AUTH_COD": "EC_WOOCOMM",
+        "RUL_COD": "EC_WOOCOMM",
+        "TAX_DOC_PART": "O",
+        "TAX_AMT": 4.41
+      }
+    ],
+    "PS_TAX": {
+      "ORD_NORM_TAX_AMT": 0,
+      "ORD_TAX_AMT": 4.41
+    }
+  }'
+```
+
+
+### Annotated Payload for Creating a Sales Order
+
+Use this version while reviewing or modifying the payload.
+
+> The annotated version explains how each field is used, which fields should be modified, and which fields are required.
+
+```jsonc
+{
+  "CUST_NO": "202-100000",        // MODIFY: Customer number for the order
+  "REF": "RAPID-TEST",            // MODIFY: External reference number, web order number, or integration reference
+  "SHIP_DAT": "2025-08-01",       // MODIFY: Requested ship date
+  "DOC_TYP": "O",                 // Sales order document type
+  "STR_ID": "202",                // MODIFY: Store ID
+  "STA_ID": "202-01",             // MODIFY: Station ID
+  "DRW_ID": "202-01",             // MODIFY: Drawer ID
+  "TKT_TYP": "T",                 // Ticket type
+  "USR_ID": "RAPID",              // MODIFY: Counterpoint user ID
+  "TAX_COD": "EC_WOOCOMM",        // MODIFY: Tax code
+  "TAX_OVRD_REAS": "EC_WOOCOMM",  // MODIFY: Tax override reason
+  "TKT_DT": null,                 // Optional: Leave null to let Counterpoint/API assign the ticket date
+  "REQ_REPRICE": "Y",             // Recalculate prices based on price rules when hold-and-recall is done
+
+  "PS_DOC_LIN": [
+    {
+      "ITEM_NO": "APL-UMB",       // MODIFY: Item number
+      "QTY_UNIT": "Each",         // Optional if the item unit sold is the default stocking unit; required if using an alternate unit
+      "QTY_SOLD": 1,              // MODIFY: Quantity sold
+      "LIN_TYP": "O",             // Order line type
+      "PRC": 14.99,               // MODIFY: Selling price
+
+      "PS_DOC_LIN_PRICE": [       // REQUIRED: Allows Counterpoint to calculate the correct price fields
+        {
+          "QTY_PRCD": 1,          // Should be the same value as QTY_SOLD
+          "UNIT_PRC": 14.99       // Should be the same value as PRC
+        }
+      ]
+    },
+    {
+      "ITEM_NO": "ADM-PLAT",      // MODIFY: Item number
+      "QTY_UNIT": "DOZ",          // Optional if the item unit sold is the default stocking unit; required if using an alternate unit
+      "SELL_UNIT": "0",           // Optional if the item unit sold is the default stocking unit; required if using an alternate unit
+      "QTY_SOLD": 1,              // MODIFY: Quantity sold
+      "LIN_TYP": "O",             // Order line type
+      "PRC": 36.95,               // MODIFY: Selling price
+
+      "PS_DOC_LIN_PRICE": [       // REQUIRED: Allows Counterpoint to calculate the correct price fields
+        {
+          "QTY_PRCD": 1,          // Should be the same value as QTY_SOLD
+          "UNIT_PRC": 36.95       // Should be the same value as PRC
+        }
+      ]
+    }
+  ],
+
+  "PS_DOC_PMT": [                 // Document payment
+    {
+      "PAY_COD": "EC_WOOCOMM",    // MODIFY: Payment code
+      "AMT": 56.35,               // MODIFY: Payment amount
+      "GFC_AUTHED": "N",          // Gift card authorized flag
+
+      "PS_DOC_PMT_PROMPT": [      // PS_DOC_PMT_PROMPT should be inside PS_DOC_PMT
+        {
+          "PROMPT_TXT": "Enter Ref/Auth",
+          "PROMPT_VAL": "81047671168" // MODIFY: Payment reference, authorization number, or transaction ID
+        }
+      ]
+    }
+  ],
+
+  "PS_DOC_TAX": [                 // Document tax detail
+    {
+      "AUTH_COD": "EC_WOOCOMM",   // MODIFY: Tax authority code
+      "RUL_COD": "EC_WOOCOMM",    // MODIFY: Tax rule code
+      "TAX_DOC_PART": "O",        // Tax document part
+      "TAX_AMT": 4.41             // MODIFY: Tax amount
+    }
+  ],
+
+  "PS_TAX": {                     // Document tax total
+    "ORD_NORM_TAX_AMT": 0,        // MODIFY: Normal order tax amount
+    "ORD_TAX_AMT": 4.41           // MODIFY: Total order tax amount
+  }
+}
+```
