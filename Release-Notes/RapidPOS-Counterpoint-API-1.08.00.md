@@ -1,79 +1,62 @@
 # Rapid CP API v1.08.00 Release Notes
 **Release Date:** May 12th, 2026
 
-## New Functionality
+## New Endpoint: Create or Update Item Barcodes
 
-### Freight Allocation now respected
-RapidGO now distributes Miscellaneous charges (e.g., freight) proportionally across receiver line items when posting to Counterpoint.
+A new endpoint, `POST /Items/Barcode`, has been added to allow users and integrations to create or update individual barcode records associated with item units.
 
-Allocation is based on the setting configured on the misc charge.
+### Highlights
 
-#### Example
+* Create new barcode records for item units.
+* Update existing barcode records using `IM_BARCOD.BARCODE`.
+* Returns the created or updated barcode object upon success.
+* Successful requests return **HTTP 201 Created**.
 
-- **Purchase Request:** 10 items totaling $1,000 + $100 freight
-- Each item receives $10 freight allocation (1/10th)
+### Example
 
-If only 5 items are received:
+```http
+POST /Items/Barcode
+Host: cpapi.rapidpos.com
+```
 
-- Total freight applied = $50
-- Distributed across the 5 received items
+```json
+{
+  "ITEM_NO": "ABC123",
+  "BARCODE": "0123456789012",
+  "UNIT": "EA"
+}
+```
 
-#### Required Settings
+Response:
 
-When the settings below are enabled, Misc charges cost will be proportionally distributed across all receiver lines:
+```json
+{
+  "ITEM_NO": "ABC123",
+  "BARCODE": "0123456789012",
+  "UNIT": "EA"
+}
+```
 
-- **Use Misc Charge 1** = Checked
-- **Include in Cost** = Checked
-- **Allocate By** = Cost
+---
 
-Settings are sourced from Purchasing Control.
+## Receiving Endpoint Enhancements
 
-See:  
-http://ncrcounterpointhelp.com/#3_back_office/purchasing/allocate_miscellaneous_charges.htm?Highlight=allocate%20misc
+The `POST /Receivings` endpoint now supports updating receiver header and line comment data as part of the receiving workflow.
 
-<br>
+### Supported Updates
 
-### Transfer To / Transfer From Workgroup Selection
-In previous versions of RapidGO, users were unable to select their currently signed-in workgroup as a **Transfer To** location.
+#### Receiver Header Fields
 
-With this version of RapidGO, users can now select any location in either the **Transfer To** or **Transfer From** locations.
+* `REF`
+* `COMMNT_1`
+* `COMMNT_2`
+* `COMMNT_3`
 
-<br>
+#### Receiver Line Fields
 
-### Changing Receiving Header Information
-RapidGO now allows users to edit receiver header information directly within the application.
+* `COMMNT_1`
+* `COMMNT_2`
+* `COMMNT_3`
 
-Users can now modify:
+These enhancements allow receiving metadata and line-level comments to be modified directly within RapidGO and synchronized during the receiving workflow, eliminating the need for manual updates in CounterPoint.
 
-#### Header Fields
-- `REF`
-- `COMMNT_1`
-- `COMMNT_2`
-- `COMMNT_3`
-
-#### Line Fields
-- `COMMNT_1`
-- `COMMNT_2`
-- `COMMNT_3`
-
-This enhancement provides greater flexibility when updating receiving information without needing to return to CounterPoint.
-
-
-<br>
-
-### Modifying Receiving Line Comments
-Users can now edit receiver line comments directly in RapidGO.
-
-This allows warehouse and receiving staff to:
-- Update line-specific notes during the receiving process
-- Correct or add additional receiving details
-- Maintain more accurate documentation on individual receiver lines
-
-These updates are now synchronized as part of the receiving workflow.
-
-<br>
-
-### Linking Barcodes
-RapidGO now supports linking new barcodes directly to item units within the application.
-
-This enhancement improves efficiency when onboarding new inventory and managing alternate unit barcodes.
