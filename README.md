@@ -265,7 +265,6 @@ The API returns specific error codes to help identify the type of error that occ
 The API is designed to work with the following versions of Counterpoint:
 
 - 8.5.6.1 or later
-- 8.5.7.2 or previous
 
 If you are on a later version of Counterpoint, please contact Rapid for compatibility details.
 
