@@ -1,4 +1,5 @@
 # Rapid Counterpoint API
+Updated June 9th 2026
 
 The Rapid POS Counterpoint API provides access to your NCR Counterpoint retail management system data through a REST API. This API enables integration with mobile applications, third-party systems, and custom solutions.
 
