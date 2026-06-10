@@ -9,9 +9,8 @@ The Rapid POS Counterpoint API provides access to your NCR Counterpoint retail m
 
 This API requires Counterpoint version **8.5.7.2 or later**. For compatibility questions, contact Rapid support.
 
-For additional connector requirements, see the [CI/CD Connector Requirements](https://github.com/Rapid-POS/Miscellaneous-Documents/blob/main/CICD-Connector-Requirements.md) documentation.
-
----
+> [!WARNING]
+> Your environment must meet our [CI/CD Connector Requirements](https://github.com/Rapid-POS/Miscellaneous-Documents/blob/main/CICD-Connector-Requirements.md) (server access, firewall rules, etc.) before any install or upgrade. Troubleshooting, manual installs, or follow-up work resulting from unmet requirements will be billed at standard T&M rates.
 
 ## Authentication
 
