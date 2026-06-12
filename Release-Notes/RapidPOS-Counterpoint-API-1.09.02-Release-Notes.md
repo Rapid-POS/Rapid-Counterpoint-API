@@ -1,7 +1,8 @@
 # Rapid CounterPoint API v1.08.04 - Release Notes 
 **Release Date:** June 17th 2026
-_Enhancements to serial number validation for inventory adjustments and improved item description handling and total calculation accuracy for receiving documents._
 
+_Enhancements to serial number validation for inventory adjustments and improved item description handling and total calculation accuracy for receiving documents._
+```
 ## Breaking Changes
 
 ### `POST /InventoryAdjustments`
