@@ -1,14 +1,61 @@
-# Rapid CounterPoint API v1.08.04 - Release Notes 
-**Release Date:** June 17th 2026
+# Rapid CounterPoint API v1.08.04 Release Notes
 
-_Enhancements to serial number validation for inventory adjustments and improved item description handling and total calculation accuracy for receiving documents._
-```
-## Breaking Changes
+**Release Date:** June 17, 2026
+
+_Bug fixes for serial number validation on inventory adjustments, and for item description handling, null-safety, and total calculation on receiving documents._
+
+---
+
+## Bug Fixes
 
 ### `POST /InventoryAdjustments`
-Negative quantity adjustments that reference a serial number not on file now return an error instead of succeeding silently.
 
-Integrations performing serialized inventory reductions must ensure the serial number exists in inventory before submitting a negative adjustment. Submitting an invalid serial number now returns **HTTP 500** with the following response:
+Negative quantity adjustments now validate the serial number against native CounterPoint rules before being accepted. A serial that is not on file, or is on file but not in a valid state for reduction (for example, already committed or posted), is now rejected rather than accepted.
+
+**Integrator action required:** Ensure the serial exists and is valid for reduction before submitting a negative adjustment. Submitting an invalid serial number now returns **HTTP 500**.
+
+**Supported fields**
+
+- `QTY` — when negative, triggers serial validation against on-file inventory
+- `IM_ADJ_TRX_SER[].SER_NO` — must reference a serial number that is on file and valid for reduction when `QTY < 0`
+
+**Example**
+
+```http
+POST /InventoryAdjustments
+```
+
+```json
+{
+  "IM_ADJ_TRX_SER": [
+    {
+      "BAT_ID": "101",
+      "ITEM_NO": "TEST-ITEM",
+      "LOC_ID": "101",
+      "TRX_DAT": "9999-01-01T00:00:00-00:00",
+      "SEQ_NO": 1,
+      "SER_NO": "xxxxx"
+    }
+  ],
+  "BAT_ID": "101",
+  "ITEM_NO": "TEST-ITEM",
+  "LOC_ID": "101",
+  "TRX_DAT": "9999-01-01T00:00:00-00:00",
+  "SEQ_NO": 1,
+  "QTY": -1.0,
+  "QTY_NUMER": 0,
+  "QTY_DENOM": 0,
+  "UNIT": "EACH",
+  "DOC_NO": "null",
+  "REF": "null",
+  "REAS_COD": "TRANSFER",
+  "CustomFields": {
+    "USER_VEND_NO": "xxxxx"
+  }
+}
+```
+
+Response:
 
 ```json
 {
@@ -17,22 +64,17 @@ Integrations performing serialized inventory reductions must ensure the serial n
 }
 ```
 
-## Endpoint Enhancements
-
-### `POST /InventoryAdjustments`
-Serial number existence is now validated when `QTY` is negative, aligning API behavior with native CounterPoint functionality.
-
-**Supported fields**
-- `QTY` — when negative, triggers serial number validation against on-file inventory
-- `IM_ADJ_TRX_SER[].SER_NO` — must reference an existing serial number when `QTY < 0`
+---
 
 ### `POST /Documents/Receivings`
-Item descriptions and receiver totals are now calculated correctly at creation time, with no manual refresh required in CounterPoint.
+
+Item descriptions are now populated correctly. `DESCR` and `ITEM_DESCR` previously returned blank when the configured description source was null or empty; both fields now fall back to the item's default description. `QTY_UNIT` handling is now null-safe during receiving creation.
 
 **Supported fields**
+
 - `DESCR` — now populated using the item's long description; falls back to the default item description when long description is null or empty
 - `ITEM_DESCR` — follows the same fallback logic as `DESCR`
-- `Total` — now correctly calculated as subtotal + total misc at creation time, based on active Purchasing Control configuration
+- `QTY_UNIT` — quantity-unit handling is now null-safe during receiving creation
 
 **Example**
 
@@ -53,7 +95,7 @@ POST /Documents/Receivings?WorkgroupId=27&poNumber=&unreceivedHandling=
       "ITEM_NO": "10003",
       "QTY_RECVD": 0,
       "QTY_UNIT": "PACK",
-      "RECVD_COST": 2.7500
+      "RECVD_COST": 2.75
     }
   ]
 }
@@ -69,4 +111,11 @@ Response:
 }
 ```
 
-> **Configuration note:** If your Purchasing Control setting (**Setup > Purchasing > Purchasing Control > Activity > Purchase Order > Default Item Description**) is set to `Long Description`, ensure item records contain valid long descriptions. Items with a blank long description will fall back to the default item description. RapidGo users should refresh item data from Settings after updating item descriptions.
+> **Configuration note:** If your Purchasing Control setting (_Setup > Purchasing > Purchasing Control > Activity > Purchase Order > Default Item Description_) is set to `Long Description`, ensure item records contain valid long descriptions. Items with a blank long description will fall back to the default item description.
+
+---
+
+### `POST /Documents/Receivings` — Receiver total calculation
+
+The `Total` section is now computed as subtotal + total misc at creation time. Previously, totals required a manual refresh in CounterPoint to reflect the correct value. No request or response fields change; the correct total is now returned on the initial create response.
+````
