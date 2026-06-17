@@ -1,27 +1,47 @@
-# Rapid Counterpoint API
-Updated June 9th 2026
+# Rapid CounterPoint API
 
-The Rapid POS Counterpoint API provides access to your NCR Counterpoint retail management system data through a REST API. This API enables integration with mobile applications, third-party systems, and custom solutions.
+The Rapid POS CounterPoint API provides access to your NCR CounterPoint retail management system data through a REST API. This API enables integration with mobile applications, third-party systems, and custom solutions.
+
+> **Note:** This API requires CounterPoint version 8.5.7.2 or later. For compatibility questions, contact Rapid Support.
+
+---
+
+## Overview
+
+The Rapid CounterPoint API exposes your NCR CounterPoint data through a standard REST interface, allowing external systems to read and write items, customers, documents, inventory, and purchase orders. All endpoints require both an API key and valid CounterPoint user credentials.
 
 ---
 
 ## System Requirements
 
-This API requires Counterpoint version **8.5.7.2 or later**. For compatibility questions, contact Rapid support.
+| Requirement | Minimum Version |
+|---|---|
+| **CounterPoint** | 8.5.7.2 |
 
 > [!WARNING]
 > Your environment must meet our [CI/CD Connector Requirements](https://github.com/Rapid-POS/Miscellaneous-Documents/blob/main/CICD-Connector-Requirements.md) (server access, firewall rules, etc.) before any install or upgrade. Troubleshooting, manual installs, or follow-up work resulting from unmet requirements will be billed at standard T&M rates.
 
-## Authentication
+---
 
-### API Key Authentication with Counterpoint Credentials
+## Table of Contents
 
-All API access requires both an API key and valid Counterpoint user credentials.
+- [Section 1: Authentication](#section-1-authentication)
+- [Section 2: Pagination](#section-2-pagination)
+- [Section 3: Common Endpoints](#section-3-common-endpoints)
+- [Section 4: Error Handling](#section-4-error-handling)
+- [Section 5: Error Codes](#section-5-error-codes)
+- [Section 6: Examples](#section-6-examples)
 
-**Required Headers:**
+---
+
+## Section 1: Authentication
+
+All API access requires both an API key and valid CounterPoint user credentials.
+
+### Required Headers
 
 | Header | Description |
-|--------|-------------|
+|---|---|
 | `x-api-key` | Your API key (contact Rapid to obtain) |
 | `Content-Type` | `application/json` |
 
@@ -29,7 +49,7 @@ All API access requires both an API key and valid Counterpoint user credentials.
 
 **Endpoint:** `POST /Authentication/Token`
 
-**Request Body:**
+**Request body:**
 
 ```json
 {
@@ -78,7 +98,7 @@ curl -X GET "https://rapid.cpapi.com/Items" \
 
 **Endpoint:** `POST /Authentication/TokenRefresh`
 
-**Request Body:**
+**Request body:**
 
 ```json
 {
@@ -89,33 +109,30 @@ curl -X GET "https://rapid.cpapi.com/Items" \
 
 ### How to Obtain Your API Key
 
-1. Contact Rapid support
+1. Contact Rapid Support
 2. Provide your company information and intended use case
 3. Rapid will provision an API key for your environment
 4. Use the provided API key in the `x-api-key` header
-
+   
+- Click here to start a support ticket to obtain your API key](mailto:support@rapidpos.com)
 ---
 
-## Pagination
+## Section 2: Pagination
 
 Most list endpoints support pagination to manage large result sets efficiently.
 
 ### Pagination Parameters
 
-All pagination is handled through query parameters:
-
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `Page` | integer (optional) | Page number (1-based indexing). Default: `1` |
-| `PageSize` | integer (optional) | Records per page. Default: `50`, Maximum: typically `250–500` |
-| `StartDate` | datetime (optional) | Filter from this date (uses `RS_UTC_DT`). Format: ISO 8601 or `YYYY-MM-DD` |
-| `EndDate` | datetime (optional) | Filter to this date (uses `RS_UTC_DT`). Format: ISO 8601 or `YYYY-MM-DD` |
-| `Include` | boolean (optional) | Include related data (e.g., barcodes, grid dimensions). Default: `false` |
-| `Keyword` | string (optional) | Search term for filtering results using Counterpoint's Data Dictionary fields |
+|---|---|---|
+| `Page` | integer *(optional)* | Page number (1-based indexing). Default: 1 |
+| `PageSize` | integer *(optional)* | Records per page. Default: 50, Maximum: 250–500 |
+| `StartDate` | datetime *(optional)* | Filter from this date (uses `RS_UTC_DT`). Format: ISO 8601 or `YYYY-MM-DD` |
+| `EndDate` | datetime *(optional)* | Filter to this date (uses `RS_UTC_DT`). Format: ISO 8601 or `YYYY-MM-DD` |
+| `Include` | boolean *(optional)* | Include related data (e.g. barcodes, grid dimensions). Default: `false` |
+| `Keyword` | string *(optional)* | Search term for filtering results using CounterPoint Data Dictionary fields |
 
-### Pagination Examples
-
-#### Basic Pagination
+### Basic Pagination
 
 ```bash
 # Get first page (default 50 records)
@@ -129,7 +146,7 @@ curl -X GET "https://rapid.cpapi.com/Items?Page=2&PageSize=25" \
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-#### Date Range Filtering
+### Date Range Filtering
 
 ```bash
 curl -X GET "https://rapid.cpapi.com/Items?StartDate=2024-01-01&EndDate=2024-01-31&Page=1&PageSize=100" \
@@ -137,7 +154,7 @@ curl -X GET "https://rapid.cpapi.com/Items?StartDate=2024-01-01&EndDate=2024-01-
   -H "x-api-key: YOUR_API_KEY"
 ```
 
-#### Search with Pagination
+### Search with Pagination
 
 ```bash
 curl -X GET "https://rapid.cpapi.com/Items?Keyword=shirt&Page=1&PageSize=50" \
@@ -176,12 +193,12 @@ while (hasMoreData) {
 
 ---
 
-## Common Endpoints
+## Section 3: Common Endpoints
 
 ### Items
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|---|---|---|
 | `GET` | `/Items` | Get all items with pagination |
 | `GET` | `/Items/{itemNo}` | Get specific item |
 | `POST` | `/Items` | Create new item |
@@ -190,14 +207,14 @@ while (hasMoreData) {
 ### Customers
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|---|---|---|
 | `GET` | `/Customers` | Get all customers with pagination |
 | `GET` | `/Customers/{customerNo}` | Get specific customer |
 
 ### Documents (Orders, Tickets, etc.)
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|---|---|---|
 | `GET` | `/Documents` | Get documents with filtering and pagination |
 | `GET` | `/Documents/{docId}` | Get specific document |
 | `POST` | `/Documents` | Create new document |
@@ -205,22 +222,24 @@ while (hasMoreData) {
 ### Inventory
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|---|---|---|
 | `GET` | `/ItemInventory` | Get inventory levels with pagination |
 | `GET` | `/ItemPrices` | Get pricing information |
 
 ### Purchase Orders
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|---|---|---|
 | `GET` | `/PurchaseOrders` | Get purchase orders with pagination |
 | `GET` | `/Receivings` | Get receiving documents |
 
 ---
 
-## Error Handling
+## Section 4: Error Handling
 
-The API uses standard HTTP status codes and returns detailed error information:
+The API uses standard HTTP status codes and returns detailed error information.
+
+**Error response format:**
 
 ```json
 {
@@ -233,39 +252,41 @@ The API uses standard HTTP status codes and returns detailed error information:
 ### HTTP Status Codes
 
 | Code | Meaning |
-|------|---------|
-| `200` | OK – Success |
-| `400` | Bad Request – Invalid request data |
-| `401` | Unauthorized – Authentication required or invalid |
-| `403` | Forbidden – Insufficient permissions |
-| `404` | Not Found – Resource not found |
+|---|---|
+| `200` | OK — Success |
+| `400` | Bad Request — Invalid request data |
+| `401` | Unauthorized — Authentication required or invalid |
+| `403` | Forbidden — Insufficient permissions |
+| `404` | Not Found — Resource not found |
 | `500` | Internal Server Error |
 
-### Error Codes
+---
 
-#### Authentication & Authorization
+## Section 5: Error Codes
+
+### Authentication & Authorization
 
 | Code | Description |
-|------|-------------|
+|---|---|
 | `ERROR_UNAUTHORIZED` | User is not authorized to access the resource |
 | `ERROR_INVALID_APIKEY` | The provided API key is invalid |
 | `ERROR_INVALID_LOGIN_CREDENTIALS` | Username or password is incorrect |
 | `ERROR_INVALID_ROLE_PERMISSIONS` | User does not have sufficient permissions |
 
-#### Data & Validation
+### Data & Validation
 
 | Code | Description |
-|------|-------------|
+|---|---|
 | `ERROR_MISSING_REQUIRED_DATA` | Required fields are missing from the request |
 | `ERROR_INVALID_DATA` | The provided data is invalid or malformed |
 | `ERROR_INVALID_REQUEST_DATA` | The request structure or format is invalid |
 | `ERROR_RECORD_NOT_FOUND` | The requested record does not exist |
 | `ERROR_PROPERTY_NOT_SET` | A required property has not been set |
 
-#### Document & Transaction
+### Document & Transaction
 
 | Code | Description |
-|------|-------------|
+|---|---|
 | `ERROR_DOCUMENT_NOT_FULLY_PAID` | Operation requires the document to be fully paid |
 | `ERROR_NOT_PURE_ORDER` | Operation can only be performed on pure orders |
 | `ERROR_DOCUMENT_HAS_SHIPPING_ADDRESS` | Document already has a shipping address |
@@ -275,23 +296,23 @@ The API uses standard HTTP status codes and returns detailed error information:
 | `ERROR_INVALID_LIN_TYP` | Invalid line type specified |
 | `ERROR_INVALID_CONTACT_ID` | The provided contact ID is invalid |
 
-#### Payment
+### Payment
 
 | Code | Description |
-|------|-------------|
+|---|---|
 | `ERROR_INVALID_GIFTCARD_PAYMENT` | Gift card payment is invalid |
 | `ERROR_AR_PAYMENT_FAILED` | Accounts receivable payment failed |
 
-#### User Management
+### User Management
 
 | Code | Description |
-|------|-------------|
+|---|---|
 | `ERROR_PASSWORD_EXPIRED` | User password has expired |
 
-#### System
+### System
 
 | Code | Description |
-|------|-------------|
+|---|---|
 | `ERROR_DATA_UNABLE_TO_POST` | Unable to post data to the system |
 | `ERROR_INTERNAL_SERVER_ERROR` | An internal server error occurred |
 | `ERROR_UNKNOWN` | An unknown error occurred |
@@ -299,12 +320,11 @@ The API uses standard HTTP status codes and returns detailed error information:
 
 ---
 
-## Examples
+## Section 6: Examples
 
 ### Complete Authentication Flow
 
 ```javascript
-// 1. Get access token
 const tokenResponse = await fetch(
   "https://rapid.cpapi.com/Authentication/Token",
   {
@@ -323,7 +343,6 @@ const tokenResponse = await fetch(
 const tokenData = await tokenResponse.json();
 const accessToken = tokenData.accessToken;
 
-// 2. Use access token to get data
 const itemsResponse = await fetch(
   "https://rapid.cpapi.com/Items?Page=1&PageSize=10",
   {
@@ -338,7 +357,7 @@ const items = await itemsResponse.json();
 console.log(items);
 ```
 
-### POST /Documents Example
+### POST /Documents — Create a Ticket
 
 ```bash
 curl -X POST "https://rapid.cpapi.com/Documents" \
@@ -411,146 +430,94 @@ curl -X POST "https://rapid.cpapi.com/Documents" \
   }'
 ```
 
----
+### POST /Documents — Create a Sales Order
 
-### Creating a Sales Order Document
+Fields marked `MODIFY` are the most common values to change for each order.
 
-Sample working payload for creating a Counterpoint sales order document. Fields marked with `// MODIFY` are the most common values that should be changed for each order.
-
-#### Sample Request
-
-```bash
-curl -X POST "https://rapid.cpapi.com/Documents" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "CUST_NO": "202-100000",
-    "REF": "RAPID-TEST",
-    "SHIP_DAT": "2025-08-01",
-    "DOC_TYP": "O",
-    "STR_ID": "202",
-    "STA_ID": "202-01",
-    "DRW_ID": "202-01",
-    "TKT_TYP": "T",
-    "USR_ID": "RAPID",
-    "TAX_COD": "EC_WOOCOMM",
-    "TAX_OVRD_REAS": "EC_WOOCOMM",
-    "TKT_DT": null,
-    "REQ_REPRICE": "Y",
-    "PS_DOC_LIN": [
-      {
-        "ITEM_NO": "APL-UMB",
-        "QTY_UNIT": "Each",
-        "QTY_SOLD": 1,
-        "LIN_TYP": "O",
-        "PRC": 14.99,
-        "PS_DOC_LIN_PRICE": [
-          { "QTY_PRCD": 1, "UNIT_PRC": 14.99 }
-        ]
-      },
-      {
-        "ITEM_NO": "ADM-PLAT",
-        "QTY_UNIT": "DOZ",
-        "SELL_UNIT": "0",
-        "QTY_SOLD": 1,
-        "LIN_TYP": "O",
-        "PRC": 36.95,
-        "PS_DOC_LIN_PRICE": [
-          { "QTY_PRCD": 1, "UNIT_PRC": 36.95 }
-        ]
-      }
-    ],
-    "PS_DOC_PMT": [
-      {
-        "PAY_COD": "EC_WOOCOMM",
-        "AMT": 56.35,
-        "GFC_AUTHED": "N",
-        "PS_DOC_PMT_PROMPT": [
-          { "PROMPT_TXT": "Enter Ref/Auth", "PROMPT_VAL": "81047671168" }
-        ]
-      }
-    ],
-    "PS_DOC_TAX": [
-      {
-        "AUTH_COD": "EC_WOOCOMM",
-        "RUL_COD": "EC_WOOCOMM",
-        "TAX_DOC_PART": "O",
-        "TAX_AMT": 4.41
-      }
-    ],
-    "PS_TAX": {
-      "ORD_NORM_TAX_AMT": 0,
-      "ORD_TAX_AMT": 4.41
-    }
-  }'
-```
-
-#### Annotated Payload
-
-> **Note:** JSON does not support comments. This annotated version is for reference only.
-
-```javascript
+```json
 {
-  "CUST_NO": "202-100000",        // MODIFY: Customer number for the order
-  "REF": "RAPID-TEST",            // MODIFY: External reference / web order number
-  "SHIP_DAT": "2025-08-01",       // MODIFY: Requested ship date
-  "DOC_TYP": "O",                 // Sales order document type
-  "STR_ID": "202",                // MODIFY: Store ID
-  "STA_ID": "202-01",             // MODIFY: Station ID
-  "DRW_ID": "202-01",             // MODIFY: Drawer ID
-  "TKT_TYP": "T",                 // Ticket type
-  "USR_ID": "RAPID",              // MODIFY: Counterpoint user ID
-  "TAX_COD": "EC_WOOCOMM",        // MODIFY: Tax code
-  "TAX_OVRD_REAS": "EC_WOOCOMM",  // MODIFY: Tax override reason
-  "TKT_DT": null,                 // Leave null to let Counterpoint assign the ticket date
-  "REQ_REPRICE": "Y",             // Recalculate prices based on price rules on hold-and-recall
-
+  "CUST_NO": "202-100000",
+  "REF": "RAPID-TEST",
+  "SHIP_DAT": "2025-08-01",
+  "DOC_TYP": "O",
+  "STR_ID": "202",
+  "STA_ID": "202-01",
+  "DRW_ID": "202-01",
+  "TKT_TYP": "T",
+  "USR_ID": "RAPID",
+  "TAX_COD": "EC_WOOCOMM",
+  "TAX_OVRD_REAS": "EC_WOOCOMM",
+  "TKT_DT": null,
+  "REQ_REPRICE": "Y",
   "PS_DOC_LIN": [
     {
-      "ITEM_NO": "APL-UMB",       // MODIFY: Item number
-      "QTY_UNIT": "Each",         // Required if using an alternate unit; optional otherwise
-      "QTY_SOLD": 1,              // MODIFY: Quantity sold
-      "LIN_TYP": "O",             // Order line type
-      "PRC": 14.99,               // MODIFY: Selling price
-
-      "PS_DOC_LIN_PRICE": [       // REQUIRED: Allows Counterpoint to calculate correct price fields
-        {
-          "QTY_PRCD": 1,          // Same value as QTY_SOLD
-          "UNIT_PRC": 14.99       // Same value as PRC
-        }
+      "ITEM_NO": "APL-UMB",
+      "QTY_UNIT": "Each",
+      "QTY_SOLD": 1,
+      "LIN_TYP": "O",
+      "PRC": 14.99,
+      "PS_DOC_LIN_PRICE": [
+        { "QTY_PRCD": 1, "UNIT_PRC": 14.99 }
       ]
     }
   ],
-
   "PS_DOC_PMT": [
     {
-      "PAY_COD": "EC_WOOCOMM",    // MODIFY: Payment code
-      "AMT": 56.35,               // MODIFY: Payment amount
-      "GFC_AUTHED": "N",          // Gift card authorized flag
-
-      "PS_DOC_PMT_PROMPT": [      // Must be nested inside PS_DOC_PMT
+      "PAY_COD": "EC_WOOCOMM",
+      "AMT": 56.35,
+      "GFC_AUTHED": "N",
+      "PS_DOC_PMT_PROMPT": [
         {
           "PROMPT_TXT": "Enter Ref/Auth",
-          "PROMPT_VAL": "81047671168" // MODIFY: Payment reference / auth number
+          "PROMPT_VAL": "81047671168"
         }
       ]
     }
   ],
-
   "PS_DOC_TAX": [
     {
-      "AUTH_COD": "EC_WOOCOMM",   // MODIFY: Tax authority code
-      "RUL_COD": "EC_WOOCOMM",    // MODIFY: Tax rule code
-      "TAX_DOC_PART": "O",        // Tax document part
-      "TAX_AMT": 4.41             // MODIFY: Tax amount
+      "AUTH_COD": "EC_WOOCOMM",
+      "RUL_COD": "EC_WOOCOMM",
+      "TAX_DOC_PART": "O",
+      "TAX_AMT": 4.41
     }
   ],
-
   "PS_TAX": {
-    "ORD_NORM_TAX_AMT": 0,        // MODIFY: Normal order tax amount
-    "ORD_TAX_AMT": 4.41           // MODIFY: Total order tax amount
+    "ORD_NORM_TAX_AMT": 0,
+    "ORD_TAX_AMT": 4.41
   }
 }
 ```
-````
+
+**Key fields reference:**
+
+| Field | Notes |
+|---|---|
+| `CUST_NO` | Customer number for the order |
+| `REF` | External reference or web order number |
+| `SHIP_DAT` | Requested ship date |
+| `DOC_TYP` | `O` = Sales order |
+| `STR_ID` / `STA_ID` / `DRW_ID` | Store, station, and drawer IDs |
+| `USR_ID` | CounterPoint user ID |
+| `TAX_COD` / `TAX_OVRD_REAS` | Tax code and override reason |
+| `TKT_DT` | Set to `null` to let CounterPoint assign the ticket date |
+| `REQ_REPRICE` | `Y` recalculates prices on hold-and-recall |
+| `PS_DOC_LIN_PRICE` | Required — allows CounterPoint to calculate correct price fields |
+| `GFC_AUTHED` | Gift card authorized flag |
+| `PROMPT_VAL` | Payment reference or auth number |
+
+---
+
+## Conclusion
+
+The Rapid CounterPoint API provides a flexible REST interface for integrating your NCR CounterPoint data with mobile applications, e-commerce platforms, and third-party systems. Before go-live, confirm your environment meets the system requirements, obtain your API key from Rapid Support, and validate authentication against your CounterPoint instance.
+
+For assistance with setup, endpoint usage, or troubleshooting, contact Rapid Support.
+
+
+
+
+
+
+
+
