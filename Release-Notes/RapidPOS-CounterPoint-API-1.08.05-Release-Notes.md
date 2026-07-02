@@ -1,6 +1,6 @@
 # Rapid CounterPoint API v1.08.05 Release Notes
 
-**Release Date:** July 1, 2026
+**Release Date:** July 6, 2026
 
 _Bug fixes addressing alternate-unit stocking quantity conversion on receivings and item description population on receiver lines._
 
