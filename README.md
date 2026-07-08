@@ -13,11 +13,12 @@ The Rapid CounterPoint API exposes your NCR CounterPoint data through a standard
 
 ---
 
-## System Requirements
-
-| Requirement | Minimum Version |
-|---|---|
-| **CounterPoint** | 8.5.7.2 |
+## Minimum System Requirements:
+- Minimum Counterpoint version: **8.5.6.2**  
+- Minimum SQL Server version: **2016**  
+- Minimum Supported Operating System version: **Windows Server 2016** or **Windows 11 Pro** 
+- Minimum PowerShell version: **5.1**   
+ 
 
 > [!WARNING]
 > Your environment must meet our [CI/CD Connector Requirements](https://github.com/Rapid-POS/Miscellaneous-Documents/blob/main/CICD-Connector-Requirements.md) (server access, firewall rules, etc.) before any install or upgrade. Troubleshooting, manual installs, or follow-up work resulting from unmet requirements will be billed at standard T&M rates.
