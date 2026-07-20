@@ -1,63 +1,71 @@
 # Rapid CounterPoint API 1.08.06 Release Notes
 **Release Date:** July 22, 2026
 
-_Fixes to Inventory Adjustments serial and reason-code handling, and to Documents pagination._
+_Fixes to inventory adjustment serial validation, account number generation, and Documents pagination, plus a new date-filter alias._
 
 ## Endpoint Enhancements
 
 ### `GET /Documents`
-You can now use `BeginDate` as an accepted alias for the `StartDate` query parameter.
+Added `BeginDate` as an accepted alias for the `StartDate` query parameter.
 
 **Supported fields**
-- `BeginDate` — sets the lower bound of the date range; previously this parameter name was silently ignored. `StartDate` continues to work as before.
+- `BeginDate` — optional; binds to the same lower date-range bound as `StartDate`.
 
 **Example**
 ```http
-GET /Documents?BeginDate=7/3/2017&EndDate=12/1/2199&Page=1&PageSize=100
+GET /Documents?BeginDate=2026-07-01&EndDate=2026-07-22&Page=1&PageSize=100
 ```
+Response — total matching record count is returned in the `x-total-count` header:
+```json
+[
+  { "DOC_ID": 10042, "STR_ID": "GLEN" },
+  { "DOC_ID": 10042, "STR_ID": "MTJY" }
+]
+```
+Returns **HTTP 200 OK**.
 
 ## Bug Fixes
 
-### Documents Pagination
-`GET /Documents` now returns a consistent, complete result set with no duplicate or missing records regardless of page size. Query results are sorted in a stable order before being split into pages, so paging through the full result set returns every record exactly once. When no records match, the endpoint now returns an empty array instead of a null response body.
+### `GET /Documents` — pagination consistency
+Pagination now returns a consistent, complete result set with no duplicate or missing records, regardless of page size. Results are ordered deterministically before being split into pages, and a query with no matching records now returns an empty array instead of a null response body.
 
 **Example**
 ```http
-GET /Documents?BeginDate=7/3/2017&EndDate=12/1/2199&Page=1&PageSize=100
+GET /Documents?StartDate=2017-07-03&EndDate=2199-12-01&Page=1&PageSize=100
 ```
-Success: **HTTP 200 OK**
+Returns **HTTP 200 OK**.
 
-### Serial Status Validation for Inventory Adjustments
-`POST /InventoryAdjustments` no longer incorrectly rejects valid, available serials on a negative-quantity adjustment for serialized items. A serial's status (committed/posted/available) now updates to the correct next state once an adjustment posts, matching Counterpoint's own behavior — this previously caused a subsequent posting failure ("Processing complete. 1 transaction(s) had errors and were not processed.").
+### `POST /InventoryAdjustments` — serial validation over-rejection
+Negative adjustments on valid, available serialized items no longer return a **500** error. A serial's status also now updates to the correct next state after the adjustment posts, preventing the follow-on "1 transaction(s) had errors" failure.
 
-**Example request**
+**Example**
+```http
+POST /InventoryAdjustments
+```
 ```json
 {
-  "IM_ADJ_TRX_SER": [
-    {
-      "BAT_ID": "DEFAULT",
-      "TRX_DAT": "2026-07-08T00:00:00-05:00",
-      "LOC_ID": "ETWN",
-      "SEQ_NO": 2,
-      "SER_NO": "AC238972",
-      "SER_SEQ_NO": 0
-    }
-  ],
   "BAT_ID": "DEFAULT",
   "ITEM_NO": "U242617",
   "LOC_ID": "ETWN",
   "TRX_DAT": "2026-07-08T00:00:00-05:00",
   "SEQ_NO": 2,
   "QTY": -1.0,
-  "QTY_NUMER": 0.0,
-  "QTY_DENOM": 0.0,
   "UNIT": "EACH",
   "DOC_NO": "TS11890-2AZ",
   "REF": "TS11890-2AZ",
   "REAS_COD": "TRANSFER",
-  "CustomFields": {
-    "USER_VEND_NO": "5214-GLEN"
-  }
+  "IM_ADJ_TRX_SER": [
+    {
+      "BAT_ID": "DEFAULT",
+      "ITEM_NO": "U242617",
+      "LOC_ID": "ETWN",
+      "TRX_DAT": "2026-07-08T00:00:00-05:00",
+      "SEQ_NO": 2,
+      "SER_NO": "AC238972",
+      "SER_SEQ_NO": 0
+    }
+  ],
+  "CustomFields": { "USER_VEND_NO": "5214-GLEN" }
 }
 ```
 Previous (now-fixed) error response:
@@ -67,20 +75,23 @@ Previous (now-fixed) error response:
   "ERROR_DESCRIPTION": "Serial number \"AC238972\" is not on file or is not valid."
 }
 ```
-Success: **HTTP 200 OK**, adjustment accepted and posts without error.
+Now returns **HTTP 200 OK**; adjustment accepted and posts without error.
 
-### Reason Code Fallback for Inventory Adjustments
-`POST /InventoryAdjustments` no longer returns an internal server error when `REAS_COD` is blank or doesn't match a configured reason code. The adjustment is now processed using the item's configured default adjustment account and profit center instead of failing.
+### `POST /InventoryAdjustments` — invalid reason code
+An adjustment submitted with a `REAS_COD` that doesn't match a configured reason code no longer throws an internal server error. It now falls back to the item's default adjustment account and profit-center setup instead of failing.
 
-**Example request body**
+**Example**
+```http
+POST /InventoryAdjustments
+```
 ```json
 {
   "BAT_ID": "string",
   "ITEM_NO": "string",
   "LOC_ID": "string",
   "TRX_DAT": "datetime",
-  "SEQ_NO": "number",
-  "QTY": "number",
+  "SEQ_NO": 0,
+  "QTY": 0,
   "UNIT": "string",
   "DOC_NO": "string",
   "REF": "string",
@@ -88,49 +99,50 @@ Success: **HTTP 200 OK**, adjustment accepted and posts without error.
   "CustomFields": { "USER_VEND_NO": "string" }
 }
 ```
-Success: **HTTP 200 OK**, returns the created `IM_ADJ_TRX` record.
+Returns **HTTP 200 OK**, and returns the created `IM_ADJ_TRX` record.
 
-### Duplicate Serial Detection for Inventory Adjustments
-`POST /InventoryAdjustments` now rejects a serial number (`IM_ADJ_TRX_SER.SER_NO`) that is already present on a different unposted adjustment for the same item, instead of silently accepting the duplicate.
+### `POST /InventoryAdjustments` — duplicate serial rejection
+Submitting a serial number that's already present on a different unposted adjustment for the same item is now rejected, returning an error that identifies the conflicting batch, document number, and date, instead of silently accepting the duplicate.
 
-**Example request body**
+**Example**
+```http
+POST /InventoryAdjustments
+```
 ```json
 {
   "BAT_ID": "string",
   "ITEM_NO": "string",
   "LOC_ID": "string",
   "TRX_DAT": "datetime",
-  "SEQ_NO": "number",
+  "SEQ_NO": 0,
   "IM_ADJ_TRX_SER": [
     {
       "BAT_ID": "string",
       "ITEM_NO": "string",
       "LOC_ID": "string",
       "TRX_DAT": "datetime",
-      "SEQ_NO": "number",
+      "SEQ_NO": 0,
       "SER_NO": "string",
-      "SER_SEQ_NO": "number | null"
+      "SER_SEQ_NO": null
     }
   ]
 }
 ```
-Error response when the serial is already pending on an unposted adjustment:
+New error response when the serial is already pending on an unposted adjustment:
 ```json
 {
   "ErrorCode": "ERROR_INTERNAL_SERVER_ERROR",
   "ERROR_DESCRIPTION": "Serial number \"<SER_NO>\" already exists on an unposted transaction. Type: Inventory adjustments, Batch ID: \"<BAT_ID>\", Document number: \"<DOC_NO>\", Date: \"<TRX_DAT>\""
 }
 ```
-Success: **HTTP 200 OK** on a valid submission.
+A valid, non-duplicate submission returns **HTTP 200 OK**.
 
-### Committed Serial Error for Inventory Adjustments
-`POST /InventoryAdjustments` now distinguishes an already-in-stock serial (`STAT` `A`) from a committed serial (`STAT` `C`) on positive-quantity adjustments, returning a dedicated `"Serial number is committed."` error instead of a generic validation failure.
+### `POST /InventoryAdjustments` — G/L account number truncation
+The posted G/L account number no longer drops characters.
 
-### G/L Account Number Generation for Inventory Adjustments
-`POST /InventoryAdjustments` no longer drops characters from the generated G/L account number when a profit center is substituted into the account (location, category, subcategory, document, or store). Only the profit-center portion of the account number template is replaced; any characters between the main account segment and the profit-center segment are now preserved exactly as configured.
+- Accounts configured with no profit-center method are now used exactly as stored instead of being clipped to the company's main-account length.
+- Example: an account code of `5003-PARTS -101` previously posted as `5003101`; it now posts as `5003-PARTS -101`.
+- Example: an 11-character account like `51950-2-222` previously posted as `51950-2-22` (last character dropped); it now posts in full.
+- Accounts that do use a profit-center method (location, category, sub-category, store, or document) no longer lose characters sitting between the main-account and profit-center segments — only the profit-center portion itself is replaced.
 
-* No request or response schema changes.
-* Success: **HTTP 200 OK**
-
-### Account Number Truncation in Profit Center Lookup
-Account numbers are no longer clipped by the profit-center padding logic when the account's profit-center method is set to none; the full-length account number is now returned as configured.
+No request or response schema changes; both cases return **HTTP 200 OK**.
