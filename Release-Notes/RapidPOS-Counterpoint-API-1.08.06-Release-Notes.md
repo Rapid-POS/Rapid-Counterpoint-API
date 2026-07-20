@@ -1,4 +1,4 @@
-# Rapid CounterPoint API 1.08.07 Release Notes
+# Rapid CounterPoint API 1.08.06 Release Notes
 **Release Date:** July 22, 2026
 
 _Fixes to Inventory Adjustments serial and reason-code handling, and to Documents pagination._
