@@ -1,4 +1,4 @@
-# Rapid CounterPoint API 1.08.06 Release Notes
+# Rapid CounterPoint API 1.08.07 Release Notes
 **Release Date:** July 22, 2026
 
 _Fixes to Inventory Adjustments serial and reason-code handling, and to Documents pagination._
@@ -125,6 +125,12 @@ Success: **HTTP 200 OK** on a valid submission.
 
 ### Committed Serial Error for Inventory Adjustments
 `POST /InventoryAdjustments` now distinguishes an already-in-stock serial (`STAT` `A`) from a committed serial (`STAT` `C`) on positive-quantity adjustments, returning a dedicated `"Serial number is committed."` error instead of a generic validation failure.
+
+### G/L Account Number Generation for Inventory Adjustments
+`POST /InventoryAdjustments` no longer drops characters from the generated G/L account number when a profit center is substituted into the account (location, category, subcategory, document, or store). Only the profit-center portion of the account number template is replaced; any characters between the main account segment and the profit-center segment are now preserved exactly as configured.
+
+* No request or response schema changes.
+* Success: **HTTP 200 OK**
 
 ### Account Number Truncation in Profit Center Lookup
 Account numbers are no longer clipped by the profit-center padding logic when the account's profit-center method is set to none; the full-length account number is now returned as configured.
