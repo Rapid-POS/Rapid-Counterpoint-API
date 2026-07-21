@@ -1,4 +1,4 @@
-# Rapid CounterPoint API 1.08.06 Release Notes
+# Rapid CounterPoint API 1.08.14 Release Notes
 **Release Date:** July 22, 2026
 
 _Fixes to inventory adjustment serial validation, account number generation, and Documents pagination, plus a new date-filter alias._
