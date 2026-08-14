@@ -1,17 +1,14 @@
 # Rapid CounterPoint API 1.09.01 Release Notes
-
 **Release Date:** August 16, 2026
 
-_Adds the ability to create, fetch, and update saved (unposted) purchase requests, plus a companion purchase-entry lookup feed._
+_Adds the ability to create, fetch, and update saved (unposted) purchase requests with a companion purchase-entry lookup feed, and fixes a pagination-related regression in the DocumentHistory route._
 
 ## New Endpoints
 
 ### `POST /PurchaseRequests`
-
 Creates one or more saved, unposted purchase requests. This is not a purchase order — it saves a document for review that gets posted separately, the same way a purchase request entered by hand in CounterPoint works.
 
 **Highlights**
-
 - Body is a JSON array of request objects — create one or many in a single call, up to 500 per request.
 - `workgroupId` is required on the query string; it resolves the request-numbering counter and the fallback ship-to location for any request that omits its own `LOC_ID`.
 - Records are processed independently. A record that fails validation is reported and skipped; it does not fail the other records in the same call.
@@ -21,11 +18,9 @@ Creates one or more saved, unposted purchase requests. This is not a purchase or
 - Returns **HTTP 200 OK** for both a full success and a partial success — check the response's `ErrorCode`, not the HTTP status, to tell them apart.
 
 **Example**
-
 ```http
 POST /PurchaseRequests?workgroupId={id}
 ```
-
 ```json
 [
   {
@@ -143,7 +138,6 @@ POST /PurchaseRequests?workgroupId={id}
 ```
 
 Response — batch envelope wrapping the created request(s) in their full response shape (see `GET /PurchaseRequests/{preqNumber}` below for that shape):
-
 ```json
 {
   "ErrorCode": "SUCCESS or ERROR_INVALID_DATA",
@@ -154,14 +148,10 @@ Response — batch envelope wrapping the created request(s) in their full respon
 
 Returns **HTTP 200 OK** (including on a partial success — inspect `ErrorCode`).
 
----
-
 ### `PUT /PurchaseRequests/{preqNumber}`
-
 Replaces an existing, still-unposted purchase request in place.
 
 **Highlights**
-
 - Single request object, not an array.
 - `{preqNumber}` in the URL always wins — any `PREQ_NO` sent in the body is overridden by the route value.
 - Every line and cell is replaced wholesale from the request body; this is a full rewrite of the request's children, not a partial update — a line omitted from the body is removed.
@@ -171,34 +161,25 @@ Replaces an existing, still-unposted purchase request in place.
 - Returns **HTTP 200 OK** with the updated request in the full response shape.
 
 **Example**
-
 ```http
 PUT /PurchaseRequests/{preqNumber}?workgroupId={id}
 ```
-
 Request body: same object contract as `POST /PurchaseRequests` above, sent as a single object rather than an array.
 
 Response: same full response shape as `GET /PurchaseRequests/{preqNumber}` below.
 
----
-
 ### `GET /PurchaseRequests/{preqNumber}`
-
 Fetches one purchase request by number, with its lines and cells populated.
 
 **Highlights**
-
 - No request body and no query parameters.
-- Returns **HTTP 200 OK** with a `null` body when `{preqNumber}` does not exist or has already been posted (and so no longer exists as a request) — check for a null/empty body rather than relying on the status code.
+- Returns **HTTP 200 OK** with a null body when `{preqNumber}` does not exist or has already been posted (and so no longer exists as a request) — check for a null/empty body rather than relying on the status code.
 
 **Example**
-
 ```http
 GET /PurchaseRequests/{preqNumber}
 ```
-
 Response:
-
 ```json
 {
   "...": "every field accepted on create/update, echoed back or defaulted",
@@ -231,26 +212,19 @@ Response:
 
 Returns **HTTP 200 OK**.
 
----
-
 ### `GET /Purchasing/ReferenceData`
-
 Returns every lookup set a purchase-entry client needs in one call: vendors, locations, vendor terms, item attributes, ship-via codes, and grid dimension values, alongside the existing item/category feed.
 
 **Highlights**
-
 - Read-only.
 - Optional query params: a vendor number to scope the item list to one vendor, a zero-based page number, and a page size capped at 1000 — paging applies to the item list only; the lookup tables are always returned complete.
 - Returns **HTTP 200 OK**.
 
 **Example**
-
 ```http
 GET /Purchasing/ReferenceData?vendorNo={vendorNo}&page={page}&pageSize={pageSize}
 ```
-
 Response (new lookup sets shown; the pre-existing item/category feed is unchanged):
-
 ```json
 {
   "Vendors": [
@@ -269,3 +243,8 @@ Response (new lookup sets shown; the pre-existing item/category feed is unchange
 ```
 
 Returns **HTTP 200 OK**.
+
+## Bug Fixes
+
+### DocumentHistory date-filter behavior
+The pagination correction shipped in the August 10, 2026 RapidGO deployment had an unintended side effect on the `DocumentHistory` route's date-filter behavior, which impacted third-party API consumers who were not expected to see any change from that deployment. The date-filter behavior has been corrected and covered by a new regression test; the fix is queued for the next deployment.
