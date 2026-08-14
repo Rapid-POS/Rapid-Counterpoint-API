@@ -247,4 +247,4 @@ Returns **HTTP 200 OK**.
 ## Bug Fixes
 
 ### DocumentHistory date-filter behavior
-The pagination correction shipped in the August 10, 2026 RapidGO deployment had an unintended side effect on the `DocumentHistory` route's date-filter behavior, which impacted third-party API consumers who were not expected to see any change from that deployment. The date-filter behavior has been corrected and covered by a new regression test; the fix is queued for the next deployment.
+The pagination correction shipped in the August 10, 2026 RapidGO deployment had an unintended side effect on the `DocumentHistory` route's date-filter behavior, which impacted third-party API consumers who were not expected to see any change from that deployment. The date-filter behavior has been corrected.
