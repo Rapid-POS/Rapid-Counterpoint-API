@@ -1,4 +1,4 @@
-# Rapid CounterPoint API 1.09.01 Release Notes
+# Rapid CounterPoint API 1.09.03 Release Notes
 **Release Date:** August 25th, 2026
 
 _Adds the ability to create, fetch, and update saved (unposted) purchase requests with a companion purchase-entry lookup feed, and fixes a pagination-related regression in the DocumentHistory route._
