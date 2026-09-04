@@ -1,4 +1,4 @@
-# Rapid CP API 1.09.05 Release Notes - Coming Soon
+# Rapid CP API 1.09.05 Release Notes
 **Release Date:** September 7, 2026
 
 _Fixes a date-range query failure on older SQL Server compatibility levels, a blank-transfer-number data integrity bug, a custom-field default being cleared on write, a duplicate-receiver bug on retried receiving submissions, and startup reliability against a slow-to-mount network share._
