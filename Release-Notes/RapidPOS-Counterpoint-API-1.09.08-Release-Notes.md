@@ -1,6 +1,6 @@
 # Rapid CounterPoint API 1.09.08 Release Notes
 
-**Release Date:** October 5, 2026
+**Release Date:** October 4th, 2026
 
 _Fixes two order-submission defects: a crash on split documents with custom field data, and an incorrect default on electronic-check order lines._
 
