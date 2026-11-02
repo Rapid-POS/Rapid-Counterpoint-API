@@ -3,7 +3,7 @@ Updated September 16th 2026
 
 The Rapid POS CounterPoint API provides access to your NCR CounterPoint retail management system data through a REST API. This API enables integration with mobile applications, third-party systems, and custom solutions.
 
-> **Note:** This API requires CounterPoint version 8.5.7.2 or later. For compatibility questions, contact Rapid Support.
+> **Note:** This API requires CounterPoint version 8.5.6.2 or later. For compatibility questions, contact Rapid Support.
 
 ---
 
