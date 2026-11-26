@@ -318,6 +318,9 @@ Order lines (including special order lines) and layaway lines can't be on the sa
 - **Open documents** (orders, layaways, holds, quotes) are returned by `GET /Documents`.
 - **Completed tickets** move to history and are no longer returned by `GET /Documents`. Use `GET /DocumentHistory` instead.
 - `GET /DocumentHistory` requires a `StartDate` and `EndDate`. Without them, only the current day is searched.
+- To pull a single day, send the same date for both (for example, `StartDate=2026-11-23&EndDate=2026-11-23`). The whole day is included.
+- Use `WorkgroupId` to limit history to one store or workgroup (for example, `WorkgroupId=104`).
+- `CUST_PO_NO` (customer PO number) is returned on both open documents and completed tickets whenever a value is stored.
 
 ### Document Status
 
@@ -335,6 +338,7 @@ CounterPoint only creates a status row for **orders and layaways**. Quotes, hold
 
 - Custom fields added to the standard CounterPoint document tables come back in the `CustomFields` section of the `_EXT` objects (for example, `PS_DOC_HDR_EXT.CustomFields` and `PS_DOC_LIN_EXT.CustomFields`).
 - Separate custom tables (tables starting with `USER_`) are **not** returned by the API.
+- Profile fields (`PS_DOC_HDR_PROF` on open documents, `PS_TKT_HIST_PROF` on completed tickets) are stored in a separate, optional record. If nothing has been entered in them, the record doesn't exist and the API returns an empty result (`[]`). This is expected, not an error.
 
 ### Avoiding Duplicate Documents
 
@@ -528,7 +532,13 @@ console.log(items);
 ### GET /DocumentHistory — Completed Tickets for a Date Range
 
 ```bash
+# All completed tickets for November
 curl -X GET "https://rapid.cpapi.com/DocumentHistory?StartDate=2026-11-01T00:00:00&EndDate=2026-11-30T23:59:59&Page=1&PageSize=100" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "x-api-key: YOUR_API_KEY"
+
+# Completed tickets for one workgroup on a single day
+curl -X GET "https://rapid.cpapi.com/DocumentHistory?WorkgroupId=104&StartDate=2026-11-23&EndDate=2026-11-23" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY"
 ```
@@ -672,6 +682,7 @@ Store, station, drawer, tax, and pay codes must match your CounterPoint setup. T
 | Field | Notes |
 |---|---|
 | `CUST_NO` | Customer number for the order |
+| `CUST_PO_NO` | Customer PO number. Returned on open documents and completed tickets |
 | `REF` | External reference or web order number. Use a unique value so you can check for duplicates |
 | `SHIP_DAT` | Requested ship date |
 | `DOC_TYP` | `O` = Sales order |
@@ -718,6 +729,9 @@ Most often this means a totals block was sent. Leave it out; the API builds the 
 
 **Why did my one transaction turn into two documents?**
 Order lines and layaway lines can't be on the same document, so CounterPoint splits them. Send everything as order lines.
+
+**Can Rapid add a trigger to copy a field somewhere the API can read it?**
+We don't recommend it. Custom triggers on CounterPoint's own tables aren't supported and can cause problems with CounterPoint updates and posting. Check with Rapid Support first, because the API may already return the field you need (for example, `CUST_PO_NO` is returned on completed tickets when a date range is sent).
 
 **Do I need an install on every server?**
 Usually not. See [Multi-Site](#multi-site).
