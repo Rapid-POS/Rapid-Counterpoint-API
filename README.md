@@ -247,6 +247,7 @@ while (hasMoreData) {
 | Documents (tickets, sales orders) | Yes | Create |
 | Completed tickets (history) | Yes | No |
 | Inventory and pricing | Yes | No |
+| Stores | Yes | No |
 | Purchase requests | — | Create |
 | Purchase orders | Yes | No |
 | Receivings | Yes | No |
@@ -291,6 +292,12 @@ Need something that isn't supported? Contact Rapid Support to request an enhance
 | GET | `/ItemPrices` | Get pricing information |
 | GET | `/TransferHistory` | Get posted inventory transfers |
 
+### Stores
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/Stores` | Get store details, including store addresses |
+
 ### Purchasing
 
 | Method | Endpoint | Description |
@@ -301,6 +308,10 @@ Need something that isn't supported? Contact Rapid Support to request an enhance
 ---
 
 ## Section 5: Working with Orders
+
+### Orders vs. Layaways
+
+Order lines (including special order lines) and layaway lines can't be on the same document. If a request includes both, CounterPoint splits them into two separate documents. For ecommerce and other integrations, we recommend creating every transaction as an order so one transaction in your system matches one document in CounterPoint.
 
 ### Open vs. Completed Orders
 
@@ -333,9 +344,62 @@ The API doesn't support idempotency keys, so a retried `POST /Documents` can cre
 2. Log the `REF`, the request time, and the response for every call.
 3. If a request times out, **don't resend it right away.** Query `GET /Documents` for a short window around the send time and check for your `REF` value. Only retry if it isn't there.
 
-### Payments
+### Tax
 
-Payments can be included on a new document in `PS_DOC_PMT`. Adding a payment to an existing open order or layaway isn't currently supported.
+The API **does not calculate tax.** It saves the tax amounts you send. Every order that carries tax needs both of these:
+
+| Block | Fields | What it does |
+|---|---|---|
+| `PS_TAX` | `ORD_TAX_AMT`, `ORD_NORM_TAX_AMT` | Sets the tax override flag |
+| `PS_DOC_TAX` (one row, `TAX_DOC_PART` = `O`) | `TAX_AMT`, `NORM_TAX_AMT`, `AUTH_COD`, `RUL_COD` | Sets the tax amount stored on the order |
+
+- If the `PS_DOC_TAX` row is missing, the order saves with zero tax and the total won't include tax.
+- If `PS_TAX` is missing, the tax saves but the order isn't flagged as an override.
+- Send **exactly one** order tax row carrying the full order tax. If you send several, only the first row's amount is stored as the tax, but the total adds all of them.
+- Put the tax code in `TAX_COD` and the override reason in `TAX_OVRD_REAS` on the document header.
+
+**Tax override flag:**
+
+- Charged tax (`ORD_TAX_AMT`) equals normal tax (`ORD_NORM_TAX_AMT`): no override.
+- Any difference, including a charged tax of 0: amount override (`A`).
+- Exempt (`E`) is not stored for orders created through the API.
+
+**Example:** charged tax of 10.00 with normal tax of 0.00 on a 100.00 subtotal. Send `ORD_TAX_AMT` 10 / `ORD_NORM_TAX_AMT` 0 in `PS_TAX`, and `TAX_AMT` 10 / `NORM_TAX_AMT` 0 on the order tax row. The order is stored with tax 10.00, total 110.00, override `A`.
+
+**Don't send a totals block.** The API builds the document totals itself, and sending them causes a duplicate-key error.
+
+**Line-level tax:** neither the API nor CounterPoint splits the order tax across lines. `TAX_AMT_ALLOC` and `NORM_TAX_AMT_ALLOC` are saved as sent and stay 0 if you leave them out. They don't change the order tax or total, but line-level reports use them, so we recommend allocating the tax proportionally on your side. For example, 10.00 of tax over lines of 60.00 and 40.00 would be 6.00 and 4.00, with any rounding remainder on the last line.
+
+**Line taxable flags:** if a line's `IS_TXBL` is different from its `NORM_IS_TXBL`, the order totals count that line as overridden.
+
+### Payments and Deposit Tickets
+
+- Payments are included on a new document in `PS_DOC_PMT`. Adding a payment to an existing open order or layaway isn't currently supported.
+- When an order includes a payment, the API creates the deposit ticket automatically. You don't need to send anything ticket-specific. The tax code and override reason are copied to the deposit ticket, all tax stays on the order, and the order's amount due is reduced by the deposit.
+- The request must include a valid cash drawer (`DRW_ID`) for the store, and the payment line must be complete. Either one missing makes the request fail. If you're unsure which fields to send, ask Rapid Support for a sample payment from your CounterPoint.
+
+### Shipping Charges
+
+Send shipping as a miscellaneous charge in `PS_DOC_HDR_MISC_CHRG`, using the miscellaneous charge number your CounterPoint is set up to use for shipping (ask your CounterPoint administrator or Rapid Support if you're not sure which one). The charge is added to the order total, and no tax is calculated on it.
+
+```json
+"PS_DOC_HDR_MISC_CHRG": [
+  {
+    "MISC_CHRG_NO": {YourShippingChargeNo},
+    "MISC_TYP": "A",
+    "MISC_AMT": 12.50
+  }
+]
+```
+
+### Field Requirements
+
+| Field | Requirement |
+|---|---|
+| `SHIP_TO_CONTACT.NAM_TYP` | Required. `P` = person, `B` = business |
+| `TAX_COD`, `TAX_OVRD_REAS`, `AUTH_COD`, `RUL_COD` | 10 characters maximum |
+| `CNTRY` | 20 characters maximum. Longer values are rejected |
+| `STATE` | Use the two-letter state abbreviation (for example, `CA`, not `California`) so addresses match existing customer records and duplicates aren't created |
 
 ---
 
@@ -493,4 +557,175 @@ curl -X POST "https://rapid.cpapi.com/Documents" \
         "LIN_TYP": "S",
         "PRC": 699.0,
         "ITEM_NO": "ADM-SCD",
-        "DESCR": "Adams
+        "DESCR": "Adams SC Driver, RH",
+        "QTY_SOLD": 1.0,
+        "QTY_UNIT": "EACH",
+        "IS_TXBL": "Y",
+        "UNIT_COST": 162.7644,
+        "USR_ENTD_PRC": "Y"
+      }
+    ],
+    "PS_DOC_PMT": [
+      {
+        "PAY_COD": "CASH",
+        "AMT": 756.67,
+        "FINAL_PMT": "N"
+      }
+    ],
+    "PS_TAX": {
+      "SAL_NORM_TAX_AMT": 0,
+      "SAL_TAX_AMT": 0
+    },
+    "BILL_TO_CONTACT": {
+      "NAM": "Walk-in Customer",
+      "EMAIL_ADRS_1": "default@rapidpos.com"
+    },
+    "SHIP_TO_CONTACT": {
+      "NAM": "Walk-in Customer",
+      "NAM_TYP": "P",
+      "FST_NAM": "Walk-in",
+      "LST_NAM": "Customer",
+      "ADRS_1": "123 Elm Street",
+      "CITY": "San Diego",
+      "STATE": "CA",
+      "ZIP_COD": "99999",
+      "CNTRY": "US"
+    },
+    "PS_DOC_HDR_MISC_CHRG": [
+      {
+        "MISC_CHRG_NO": 1,
+        "MISC_TYP": "A",
+        "MISC_AMT": 5
+      }
+    ],
+    "PS_DOC_HDR_PROF": {
+      "PROF_COD_1": "SAMPLE",
+      "PROF_NO_1": 150,
+      "PROF_ALPHA_1": "This is a sample",
+      "PROF_DAT_1": "2025-06-25T17:49:24.367Z"
+    }
+  }'
+```
+
+### POST /Documents — Create a Sales Order
+
+Store, station, drawer, tax, and pay codes must match your CounterPoint setup. This example sends tax collected by an online cart as an amount override (charged tax 4.41, normal tax 0). See [Tax](#tax).
+
+```json
+{
+  "CUST_NO": "202-100000",
+  "REF": "RAPID-TEST",
+  "SHIP_DAT": "2025-08-01",
+  "DOC_TYP": "O",
+  "STR_ID": "202",
+  "STA_ID": "202-01",
+  "DRW_ID": "202-01",
+  "TKT_TYP": "T",
+  "USR_ID": "RAPID",
+  "TAX_COD": "EC_WOOCOMM",
+  "TAX_OVRD_REAS": "EC_WOOCOMM",
+  "TKT_DT": null,
+  "REQ_REPRICE": "Y",
+  "PS_DOC_LIN": [
+    {
+      "ITEM_NO": "APL-UMB",
+      "QTY_UNIT": "Each",
+      "QTY_SOLD": 1,
+      "LIN_TYP": "O",
+      "PRC": 14.99,
+      "PS_DOC_LIN_PRICE": [
+        { "QTY_PRCD": 1, "UNIT_PRC": 14.99 }
+      ]
+    }
+  ],
+  "PS_DOC_PMT": [
+    {
+      "PAY_COD": "EC_WOOCOMM",
+      "AMT": 56.35,
+      "GFC_AUTHED": "N",
+      "PS_DOC_PMT_PROMPT": [
+        {
+          "PROMPT_TXT": "Enter Ref/Auth",
+          "PROMPT_VAL": "81047671168"
+        }
+      ]
+    }
+  ],
+  "PS_DOC_TAX": [
+    {
+      "AUTH_COD": "EC_WOOCOMM",
+      "RUL_COD": "EC_WOOCOMM",
+      "TAX_DOC_PART": "O",
+      "TAX_AMT": 4.41,
+      "NORM_TAX_AMT": 0
+    }
+  ],
+  "PS_TAX": {
+    "ORD_NORM_TAX_AMT": 0,
+    "ORD_TAX_AMT": 4.41
+  }
+}
+```
+
+**Key fields reference:**
+
+| Field | Notes |
+|---|---|
+| `CUST_NO` | Customer number for the order |
+| `REF` | External reference or web order number. Use a unique value so you can check for duplicates |
+| `SHIP_DAT` | Requested ship date |
+| `DOC_TYP` | `O` = Sales order |
+| `STR_ID` / `STA_ID` / `DRW_ID` | Store, station, and drawer IDs |
+| `USR_ID` | CounterPoint user ID |
+| `TAX_COD` / `TAX_OVRD_REAS` | Tax code and override reason (10 characters max) |
+| `PS_TAX` / `PS_DOC_TAX` | Both required for tax. See [Tax](#tax) |
+| `TKT_DT` | Set to `null` to let CounterPoint assign the ticket date |
+| `REQ_REPRICE` | `Y` recalculates prices on hold-and-recall |
+| `PS_DOC_LIN_PRICE` | Required — allows CounterPoint to calculate correct price fields |
+| `GFC_AUTHED` | Gift card authorized flag |
+| `PROMPT_VAL` | Payment reference or auth number |
+
+---
+
+## Section 9: FAQ
+
+**Why am I getting no records back?**
+Check that you're sending both the `x-api-key` header and a bearer token. Then widen your `StartDate`/`EndDate` range. These filter on the last-modified date in UTC, so an empty result can mean nothing changed in that window.
+
+**My cloud integration can't connect. Why?**
+A `https://[server-name]:[port]/` address only works inside your network. Cloud services need a public `rapidextras.com` URL. See [Private vs. Public URL](#private-vs-public-url).
+
+**How do I switch between my practice and live companies?**
+Request a new token using the other company alias in the username. The URL and API key stay the same.
+
+**Why don't I see a completed order in /Documents?**
+Completed tickets move to history. Use `GET /DocumentHistory` with a `StartDate` and `EndDate`.
+
+**Does CounterPoint have a vendor bill or AP voucher?**
+No. CounterPoint has no accounts payable module. Purchase orders and receivings are available through the API, and vendor bills are normally created in your accounting system from the receiving.
+
+**Can the API create purchase orders?**
+No. The API can read purchase orders and receivings, and can create purchase requests, which are reviewed and converted to purchase orders in CounterPoint.
+
+**Can I add a payment to an existing order or layaway?**
+Not currently. Payments can only be included when the document is created.
+
+**Why does my order have zero tax?**
+The API doesn't calculate tax. Make sure you send one `PS_DOC_TAX` row with `TAX_DOC_PART` = `O` and the tax amount, plus `PS_TAX`. See [Tax](#tax).
+
+**My order failed with a duplicate-key error. Why?**
+Most often this means a totals block was sent. Leave it out; the API builds the totals itself.
+
+**Why did my one transaction turn into two documents?**
+Order lines and layaway lines can't be on the same document, so CounterPoint splits them. Send everything as order lines.
+
+**Do I need an install on every server?**
+Usually not. See [Multi-Site](#multi-site).
+
+---
+
+## Conclusion
+
+The Rapid CounterPoint API provides a flexible REST interface for integrating your NCR CounterPoint data with mobile applications, e-commerce platforms, and third-party systems. Before go-live, confirm your environment meets the system requirements, obtain your API key from Rapid Support, and validate authentication against your CounterPoint instance.
+
+For assistance with setup, endpoint usage, or troubleshooting, contact Rapid Support.
