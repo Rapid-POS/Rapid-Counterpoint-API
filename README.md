@@ -161,19 +161,30 @@ Most list endpoints support pagination to manage large result sets efficiently.
 | Parameter | Type | Description |
 |---|---|---|
 | `Page` | integer (optional) | Page number (1-based indexing). Default: 1 |
-| `PageSize` | integer (optional) | Records per page. Default: 50, Maximum: 250–500 |
-| `StartDate` | datetime (optional) | Filter from this date/time (uses `RS_UTC_DT`). Format: ISO 8601 or YYYY-MM-DD |
-| `EndDate` | datetime (optional) | Filter to this date/time (uses `RS_UTC_DT`). Format: ISO 8601 or YYYY-MM-DD |
+| `PageSize` | integer (optional) | Records per page. Default: 50, Maximum: 250. The maximum can be changed per installation by the `ApiSettings` `MaxRows` setting. A larger value is reduced to the maximum. |
+| `StartDate` | datetime (optional) | Filter from this date/time. The field filtered depends on the endpoint. See [About Date Filters](#about-date-filters). Format: ISO 8601 or YYYY-MM-DD |
+| `EndDate` | datetime (optional) | Filter to this date/time. The field filtered depends on the endpoint. See [About Date Filters](#about-date-filters). Format: ISO 8601 or YYYY-MM-DD |
 | `Include` | boolean (optional) | Include related data (e.g. barcodes, grid dimensions, document status). Default: false |
 | `Keyword` | string (optional) | Search term for filtering results using CounterPoint Data Dictionary fields |
 
 ### About Date Filters
 
-`StartDate` and `EndDate` filter on `RS_UTC_DT`, which is the date and time the record was **last modified**, in **UTC**. They don't filter on the document date or ticket date.
+`StartDate` and `EndDate` filter on a different field depending on the endpoint.
 
-- Use them to pull records that changed since your last sync.
-- Pass times in UTC.
-- If you get no results, try a wider range. An empty result can simply mean nothing changed in that window.
+| Endpoint | Field filtered |
+|---|---|
+| `GET /Documents` | `RS_UTC_DT`, the date and time the record was last modified, in UTC |
+| `GET /Items` | `LST_MAINT_DT`, the date the item was last maintained |
+| `GET /Customers` | `LST_MAINT_DT`, the date the customer was last maintained |
+| `GET /DocumentHistory` | Ticket date (`TKT_DT`). Only the date is used; the time of day is ignored |
+| `GET /ItemAccountCodes`, `/ItemCategories`, `/ItemMixMatchCodes`, `/ItemTaxCategories`, `/ItemUnits` | `RS_UTC_DT` |
+| `GET /InventoryAdjustmentHistory` | Event date (`EVENT_DAT`) |
+| `GET /TransferHistory` | Event date (`EVENT_DAT`) |
+| `GET /PurchaseOrders`, `/Receivings`, `/Stores`, `/Vendors` | Not applied. The parameters are accepted and ignored, and the full list is returned |
+
+- Pass times in UTC for the `RS_UTC_DT` endpoints.
+- For incremental syncs, use the endpoint's own field from the table.
+- If you get no results, try a wider range. An empty result can simply mean no record falls in that window.
 
 ### Basic Pagination
 
@@ -247,9 +258,12 @@ while (hasMoreData) {
 | Documents (tickets, sales orders) | Yes | Create |
 | Completed tickets (history) | Yes | No |
 | Inventory and pricing | Yes | No |
-| Stores | Yes | No |
+| Stores and stations | Yes | No |
+| Vendors | Yes | No |
+| Item reference lists (units, categories, tax categories, account codes, mix-and-match codes) | Yes | No |
+| Inventory adjustments (history) | Yes | No |
 | Purchase requests | — | Create |
-| Purchase orders | Yes | No |
+| Purchase orders | Open POs only | No |
 | Receivings | Yes | No |
 | Inventory transfers (history) | Yes | No |
 | Adding a payment to an existing open document | — | Not supported |
@@ -267,6 +281,11 @@ Need something that isn't supported? Contact Rapid Support to request an enhance
 | GET | `/Items/{itemNo}` | Get specific item |
 | POST | `/Items` | Create new item |
 | PUT | `/Items/{itemNo}` | Update item |
+| GET | `/ItemUnits` | Get units of measure |
+| GET | `/ItemCategories` | Get item categories |
+| GET | `/ItemTaxCategories` | Get item tax categories |
+| GET | `/ItemAccountCodes` | Get item account codes |
+| GET | `/ItemMixMatchCodes` | Get mix-and-match codes |
 
 ### Customers
 
@@ -282,7 +301,7 @@ Need something that isn't supported? Contact Rapid Support to request an enhance
 | GET | `/Documents` | Get open documents with filtering and pagination |
 | GET | `/Documents/{docId}` | Get specific open document |
 | POST | `/Documents` | Create new document |
-| GET | `/DocumentHistory` | Get completed tickets. Requires `StartDate` and `EndDate` |
+| GET | `/DocumentHistory` | Get completed tickets. Always send `StartDate` and `EndDate` (filters on ticket date) |
 
 ### Inventory
 
@@ -290,20 +309,33 @@ Need something that isn't supported? Contact Rapid Support to request an enhance
 |---|---|---|
 | GET | `/ItemInventory` | Get inventory levels with pagination |
 | GET | `/ItemPrices` | Get pricing information |
-| GET | `/TransferHistory` | Get posted inventory transfers |
+| GET | `/TransferHistory` | Get received (posted) inventory transfers, filtered by event date. Send `StartDate` and `EndDate`; with no dates, the range defaults to the current moment and typically returns nothing |
+| GET | `/InventoryAdjustmentHistory` | Get inventory adjustment history, filtered by event date |
 
 ### Stores
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/Stores` | Get store details, including store addresses |
+| GET | `/Stores` | Get all stores, including store addresses |
+| GET | `/Stores/{storeId}` | Get specific store |
+| GET | `/Stores/{storeId}/Stations` | Get the stations for a store |
 
 ### Purchasing
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/PurchaseOrders` | Get purchase orders with pagination |
+| GET | `/PurchaseOrders` | Get open purchase orders with pagination. Only POs with open lines are returned; fully received POs are not |
 | GET | `/Receivings` | Get receiving documents |
+| POST | `/PurchaseRequests?workgroupId={workgroupId}` | Create purchase requests (send a list) |
+| POST | `/PurchaseRequests/Validate` | Check a purchase request without creating it |
+
+> **Note:** `POST /PurchaseRequests` can partially succeed. It returns HTTP 200 even if some requests in the list fail, so always check the `ErrorCode` on each result.
+
+### Vendors
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/Vendors` | Get vendors |
 
 ---
 
@@ -317,9 +349,9 @@ Order lines (including special order lines) and layaway lines can't be on the sa
 
 - **Open documents** (orders, layaways, holds, quotes) are returned by `GET /Documents`.
 - **Completed tickets** move to history and are no longer returned by `GET /Documents`. Use `GET /DocumentHistory` instead.
-- `GET /DocumentHistory` requires a `StartDate` and `EndDate`. Without them, only the current day is searched.
+- Always send `GET /DocumentHistory` a `StartDate` and `EndDate`. Without them, only the current day is searched. The dates filter on the ticket date, and the time of day is ignored.
 - To pull a single day, send the same date for both (for example, `StartDate=2026-11-23&EndDate=2026-11-23`). The whole day is included.
-- Use `WorkgroupId` to limit history to one store or workgroup (for example, `WorkgroupId=104`).
+- `GET /DocumentHistory` doesn't filter by store. To limit history to one store, filter the returned records on `STR_ID` after the call.
 - `CUST_PO_NO` (customer PO number) is returned on both open documents and completed tickets whenever a value is stored.
 
 ### Document Status
@@ -336,7 +368,7 @@ CounterPoint only creates a status row for **orders and layaways**. Quotes, hold
 
 ### Custom Fields
 
-- Custom fields added to the standard CounterPoint document tables come back in the `CustomFields` section of the `_EXT` objects (for example, `PS_DOC_HDR_EXT.CustomFields` and `PS_DOC_LIN_EXT.CustomFields`).
+- Custom fields added to the standard CounterPoint document tables come back in the `CustomFields` section of the `_EXT` objects (for example, `PS_DOC_HDR_EXT.CustomFields` and `PS_DOC_LIN_EXT.CustomFields`). This applies to both open documents and completed tickets.
 - Separate custom tables (tables starting with `USER_`) are **not** returned by the API.
 - Profile fields (`PS_DOC_HDR_PROF` on open documents, `PS_TKT_HIST_PROF` on completed tickets) are stored in a separate, optional record. If nothing has been entered in them, the record doesn't exist and the API returns an empty result (`[]`). This is expected, not an error.
 
@@ -400,7 +432,7 @@ Send shipping as a miscellaneous charge in `PS_DOC_HDR_MISC_CHRG`, using the mis
 
 | Field | Requirement |
 |---|---|
-| `SHIP_TO_CONTACT.NAM_TYP` | Required. `P` = person, `B` = business |
+| `NAM_TYP` | Required on both `SHIP_TO_CONTACT` and `BILL_TO_CONTACT`. `P` = person, `B` = business. Omitting it on either returns HTTP 500: `Cannot insert the value NULL into column 'NAM_TYP'` |
 | `TAX_COD`, `TAX_OVRD_REAS`, `AUTH_COD`, `RUL_COD` | 10 characters maximum |
 | `CNTRY` | 20 characters maximum. Longer values are rejected |
 | `STATE` | Use the two-letter state abbreviation (for example, `CA`, not `California`) so addresses match existing customer records and duplicates aren't created |
@@ -537,8 +569,8 @@ curl -X GET "https://rapid.cpapi.com/DocumentHistory?StartDate=2026-11-01T00:00:
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY"
 
-# Completed tickets for one workgroup on a single day
-curl -X GET "https://rapid.cpapi.com/DocumentHistory?WorkgroupId=104&StartDate=2026-11-23&EndDate=2026-11-23" \
+# Completed tickets for a single day
+curl -X GET "https://rapid.cpapi.com/DocumentHistory?StartDate=2026-11-23&EndDate=2026-11-23" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "x-api-key: YOUR_API_KEY"
 ```
@@ -588,6 +620,7 @@ curl -X POST "https://rapid.cpapi.com/Documents" \
     },
     "BILL_TO_CONTACT": {
       "NAM": "Walk-in Customer",
+      "NAM_TYP": "P",
       "EMAIL_ADRS_1": "default@rapidpos.com"
     },
     "SHIP_TO_CONTACT": {
@@ -690,6 +723,7 @@ Store, station, drawer, tax, and pay codes must match your CounterPoint setup. T
 | `USR_ID` | CounterPoint user ID |
 | `TAX_COD` / `TAX_OVRD_REAS` | Tax code and override reason (10 characters max) |
 | `PS_TAX` / `PS_DOC_TAX` | Both required for tax. See [Tax](#tax) |
+| `NAM_TYP` | Required on `BILL_TO_CONTACT` and `SHIP_TO_CONTACT` when you send them. `P` = person, `B` = business |
 | `TKT_DT` | Set to `null` to let CounterPoint assign the ticket date |
 | `REQ_REPRICE` | `Y` recalculates prices on hold-and-recall |
 | `PS_DOC_LIN_PRICE` | Required — allows CounterPoint to calculate correct price fields |
@@ -701,7 +735,7 @@ Store, station, drawer, tax, and pay codes must match your CounterPoint setup. T
 ## Section 9: FAQ
 
 **Why am I getting no records back?**
-Check that you're sending both the `x-api-key` header and a bearer token. Then widen your `StartDate`/`EndDate` range. These filter on the last-modified date in UTC, so an empty result can mean nothing changed in that window.
+Check that you're sending both the `x-api-key` header and a bearer token. Then widen your `StartDate`/`EndDate` range. The field the dates filter on depends on the endpoint (see [About Date Filters](#about-date-filters)), so an empty result can mean no record falls in that window.
 
 **My cloud integration can't connect. Why?**
 A `https://[server-name]:[port]/` address only works inside your network. Cloud services need a public `rapidextras.com` URL. See [Private vs. Public URL](#private-vs-public-url).
@@ -716,7 +750,7 @@ Completed tickets move to history. Use `GET /DocumentHistory` with a `StartDate`
 No. CounterPoint has no accounts payable module. Purchase orders and receivings are available through the API, and vendor bills are normally created in your accounting system from the receiving.
 
 **Can the API create purchase orders?**
-No. The API can read purchase orders and receivings, and can create purchase requests, which are reviewed and converted to purchase orders in CounterPoint.
+No. The API can read open purchase orders and receivings, and can create purchase requests (`POST /PurchaseRequests`), which are reviewed and converted to purchase orders in CounterPoint.
 
 **Can I add a payment to an existing order or layaway?**
 Not currently. Payments can only be included when the document is created.
